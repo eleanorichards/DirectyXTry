@@ -26,7 +26,7 @@ public:
 	bool Frame();
 
 	bool IsEscapePressed();
-	void GetMouseLocation(int&, int&);
+	void GetMouseLocation(float&, float&);
 private:
 	bool ReadKeyboard();
 	bool ReadMouse();

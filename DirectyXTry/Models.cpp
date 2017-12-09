@@ -65,6 +65,7 @@ void Models::Render(ID3D11DeviceContext *deviceContext)
 	return;
 }
 
+
 int Models::GetVertexCount()
 {
 	return m_vertexCount;
@@ -87,12 +88,6 @@ bool Models::InitialiseBuffers(ID3D11Device *device)
 	D3D11_BUFFER_DESC vertexBufferDesc, instanceBufferDesc;
 	D3D11_SUBRESOURCE_DATA vertexData, instanceData;
 	HRESULT result;
-
-	// Set the number of vertices in the vertex array.
-	//m_vertexCount = 3;
-
-	// Set the number of indices in the index array.
-	//m_indexCount = 3;
 
 	// Create the vertex array.
 	vertices = new VertexType[m_vertexCount];
@@ -199,6 +194,8 @@ bool Models::InitialiseBuffers(ID3D11Device *device)
 	instances[1].position = XMFLOAT3(0.0f, 0.0f, 5.0f);
 	instances[2].position = XMFLOAT3(1.0f, -0.0f, 5.0f);
 	instances[3].position = XMFLOAT3(1.5f, 0.0f, 5.0f);
+
+	
 
 	// Set up the description of the instance buffer.
 	instanceBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -316,31 +313,88 @@ void Models::ReleaseTexture()
 	return;
 }
 
+bool Models::ExportModel()
+{
+	//open file for writing
+	//ofstream file;
+	//file.open("../DirectyXTry/Assets/exportTxt.txt");
+	//if (file.fail())
+	//{
+	//	return false;
+	//}
+	////.txt file format
+	//if (m_model)
+	//{
+	//	file << "Vertex Count: " << m_vertexCount;
+	//	file << "\nData: \n";
+	//	for (int i = 0; i < m_vertexCount; i++)
+	//	{
+	//		file << m_model[i].x << m_model[i].y << m_model[i].z << endl;
+	//		file << m_model[i].tu << m_model[i].tv;
+	//		file << m_model[i].nx << m_model[i].ny << m_model[i].nz;
+	//		file.close();
+	//	}
+	//}
+
+	ofstream file;
+	file.open("../DirectyXTry/Assets/exportObj.txt");
+	file.clear();
+	if (file.fail())
+	{
+		return false;
+	}
+	//.obj file format
+	if (m_model)
+	{
+		file << "#.Obj export file: \n";
+		file << "#Vertex count: " << m_vertexCount << endl;
+		//adding a new group
+		//file << "\ng myTri \n";
+		file << "\n#Vertices: \n";
+		for (int i = 0; i < m_vertexCount; i++)
+		{
+			file << "v "  << m_model[i].x << " " << m_model[i].y << " " << m_model[i].z << endl;
+		}
+		file << "\n#Vertex Uvs: \n";
+		for (int i = 0; i < m_vertexCount; i++)
+		{
+			file << "vt " << m_model[i].tu << " " << m_model[i].tv << endl;
+		}
+		file << "\n#Vertex Normals: \n";
+		for (int i = 0; i < m_vertexCount; i++)
+		{
+			file << "vn " << m_model[i].nx << " " << m_model[i].ny << " " << m_model[i].nz << endl;
+		}
+		file << "\n#Faces: \n";
+		file << "f " << "3//1 2//1 1//1" << endl;
+ 		file.close();
+	}
+	return true;
+}
+
 bool Models::LoadModel(char* filename)
 {
-	ifstream fin;
+	ifstream file;
 	char input;
-	int i;
-
 
 	// Open the model file.
-	fin.open(filename);
+	file.open(filename);
 
 	// If it could not open the file then exit.
-	if (fin.fail())
+	if (file.fail())
 	{
 		return false;
 	}
 
 	// Read up to the value of vertex count.
-	fin.get(input);
+	file.get(input);
 	while (input != ':')
 	{
-		fin.get(input);
+		file.get(input);
 	}
 
 	// Read in the vertex count.
-	fin >> m_vertexCount;
+	file >> m_vertexCount;
 
 	//// Set the number of indices to be the same as the vertex count.
 	//m_indexCount = m_vertexCount;
@@ -353,24 +407,24 @@ bool Models::LoadModel(char* filename)
 	}
 
 	// Read up to the beginning of the data.
-	fin.get(input);
+	file.get(input);
 	while (input != ':')
 	{
-		fin.get(input);
+		file.get(input);
 	}
-	fin.get(input);
-	fin.get(input);
+	file.get(input);
+	file.get(input);
 
 	// Read in the vertex data.
-	for (i = 0; i<m_vertexCount; i++)
+	for (int i = 0; i<m_vertexCount; i++)
 	{
-		fin >> m_model[i].x >> m_model[i].y >> m_model[i].z;
-		fin >> m_model[i].tu >> m_model[i].tv;
-		fin >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
+		file >> m_model[i].x >> m_model[i].y >> m_model[i].z;
+		file >> m_model[i].tu >> m_model[i].tv;
+		file >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
 	}
 
 	// Close the model file.
-	fin.close();
+	file.close();
 
 	return true;
 }

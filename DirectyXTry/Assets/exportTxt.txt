@@ -1,0 +1,3 @@
+Vertex Count: 3
+Data: 
+0.51-10000-1

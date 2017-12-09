@@ -4,10 +4,11 @@
 #include "d3dclass.h"
 #include "camera.h"
 #include "models.h"
-//#include "ColourShader.h"
 #include "TextureShader.h"
 #include "LightShader.h"
 #include "Light.h"
+#include "Input.h"
+//#include "ColourShader.h"
 
 // GLOBALS //
 const bool FULL_SCREEN = false;
@@ -24,23 +25,34 @@ public:
 
 	bool Initialise(int, int, HWND);
 	void Shutdown();
-	bool Frame();
+	bool Frame(float, float);
 	void MoveObject(string direction);
 	void RotateCamera(float x, float y, float z);
 	void MoveCamera(float x, float y, float z);
 	bool Render(float _rotation);
-
 private:
+
+	void TestIntersection(float, float);
+	bool RaySphereIntersect(XMFLOAT3, XMFLOAT3, float);
+	bool HandleInput();
+private:
+
 	float rotation_speed = 0.1f;
+	float rotation = 0.0f;
+	float mouseX;
+	float mouseY;
+	bool  export_model = false;
+	bool begin_check = false;
+	bool over_object = false;
 private:
 	D3DClass* m_Direct3D;
 	Camera* m_Camera;
 	Models* m_Model;
-	//ColourShader* m_ColourShader;
 	TextureShader* m_TextureShader;
 	LightShader* m_LightShader;
 	Light* m_Light;
-
+	Input* m_Input;
+	//ColourShader* m_ColourShader;
 };
 
 #endif

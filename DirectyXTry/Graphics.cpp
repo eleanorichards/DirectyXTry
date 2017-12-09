@@ -10,6 +10,7 @@ Graphics::Graphics()
 	m_TextureShader = 0;
 	m_LightShader = 0;
 	m_Light = 0;
+	m_Input = 0;
 	//COLOURSHADER
 	//m_ColourShader = 0;	
 
@@ -21,6 +22,16 @@ Graphics::Graphics(const Graphics &)
 
 Graphics::~Graphics()
 {
+}
+
+//ANTTWEAAK callback bbutton for exporting model
+void TW_CALL RunCBExport(void *_Model)
+{
+	Models* m_Model;
+	m_Model = (Models*)_Model;
+	m_Model->ExportModel();
+	m_Model = 0;
+	delete m_Model;
 }
 
 bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
@@ -60,28 +71,13 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 	// Initialize the model object.
-	result = m_Model->Initialise(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),"../DirectyXTry/Assets/Cube.txt", "../DirectyXTry/Assets/Stone03.tga");
+	result = m_Model->Initialise(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),"../DirectyXTry/Assets/tri.txt", "../DirectyXTry/Assets/Stone03.tga");
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
 		return false;
 	}
 
-	//COLOURSHADER
-	/*Create the color shader object.
-	m_ColourShader = new ColourShader;
-	if (!m_ColourShader)
-	{
-		return false;
-	}
-
-	//// Initialize the color shader object.
-	//result = m_ColourShader->Initialise(m_Direct3D->GetDevice(), hwnd);
-	//if (!result)
-	//{
-	//	MessageBox(hwnd, L"Could not initialize the color shader object.", L"Error", MB_OK);
-	//	return false;
-	//}*/
 
 	// Create the texture shader object.
 	m_TextureShader = new TextureShader;
@@ -106,9 +102,10 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	TwBar* bTweakBar;
 	bTweakBar = TwNewBar("Model Info");
 	TwAddVarRW(bTweakBar, "Rotation Speed", TW_TYPE_FLOAT, &rotation_speed, "min=0 max=10 step=0.1");
-	TwAddVarRW(bTweakBar, "Rotation Speed2", TW_TYPE_FLOAT, &rotation_speed, "keyIncr=i keyDecr=p");
-	
-
+	TwAddVarRO(bTweakBar, "MouseX", TW_TYPE_FLOAT, &mouseX, "step=0.1");
+	TwAddVarRO(bTweakBar, "MouseY", TW_TYPE_FLOAT, &mouseY, "step=0.1");
+	TwAddButton(bTweakBar, "Export Model", RunCBExport, m_Model, "label='export'");
+	TwAddVarRO(bTweakBar, "Mouse Over Object", TW_TYPE_BOOLCPP, &over_object, "");
 	//LIGHT STUFF
 
 	// Create the light shader object.
@@ -144,15 +141,6 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 
 void Graphics::Shutdown()
 {
-	// Release the color shader object.
-	//COLOURSHADER
-	/*if (m_ColourShader)
-	{
-		m_ColourShader->Shutdown();
-		delete m_ColourShader;
-		m_ColourShader = 0;
-	}*/
-
 	//Release Anttweak bar
 	TwTerminate();
 
@@ -179,7 +167,6 @@ void Graphics::Shutdown()
 		m_TextureShader = 0;
 	}
 
-
 	// Release the model object.
 	if (m_Model)
 	{
@@ -201,14 +188,20 @@ void Graphics::Shutdown()
 		delete m_Direct3D;
 		m_Direct3D = 0;
 	}
+	//release the input object 
+	if (m_Input)
+	{
+		m_Input->Shutdown();
+		delete m_Input;
+		m_Input = 0;
+	}
 }
 
-bool Graphics::Frame()
+bool Graphics::Frame(float _mouseX, float _mouseY)
 {
+	mouseX = _mouseX;
+	mouseY = _mouseY;
 	bool result;
-
-	float rotation = 0.0f;
-
 	// Update the rotation variable each frame
 	rotation += rotation_speed * ((float)XM_PI / 180.0f);
 	if (rotation > 360.0f)
@@ -244,7 +237,7 @@ void Graphics::RotateCamera(float x, float y, float z)
 void Graphics::MoveCamera(float x, float y, float z)
 {
 
-	//XMFLOAT3 cam_position = m_Camera->GetPosition;
+//	XMFLOAT3 cam_position = m_Camera->GetPosition;
 	XMFLOAT3 new_Pos = m_Camera->GetPosition();
 	new_Pos.x += x;
 	new_Pos.y += y;
@@ -255,9 +248,9 @@ void Graphics::MoveCamera(float x, float y, float z)
 
 bool Graphics::Render(float _rotation)
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
-	bool result;
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
 
+	bool result;
 	
 	// Clear the buffers to begin the scene.
 	m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
@@ -266,9 +259,19 @@ bool Graphics::Render(float _rotation)
 	m_Camera->Render();
 
 	// Get the world, view, and projection matrices from the camera and d3d objects.
-	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Camera->GetViewMatrix(viewMatrix);
+	
+	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
+
+	// Translate to the location of the model.	
+	
+	XMMatrixTranslation(translateMatrix, -5.0f, 1.0f, 5.0f);
+	XMMatrixMultiply(worldMatrix, translateMatrix);
+	//D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &translateMatrix);
+	
+	//reset world matrix after all that multiplying
+	m_Direct3D->GetWorldMatrix(worldMatrix);
 
 	// Rotate the world matrix by the rotation value so that the triangle will spin.	
 	worldMatrix = XMMatrixRotationY(_rotation);
@@ -276,25 +279,8 @@ bool Graphics::Render(float _rotation)
 	//Draw AntTweakBar
 	TwDraw();
 
-	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	// Put the model buffers on the graphics pipeline to prepare them for drawing.
 	m_Model->Render(m_Direct3D->GetDeviceContext());
-
-	/// Render the model using the colour shader.
-	/*
-	m_ColourShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
-	if (!result)
-	{
-		return false;
-	}*/
-
-	// Render the model using the light shader.
-	/*result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-		m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor());
-	if (!result)
-	{
-		return false;
-	}*/
-
 
 	// Render the model using the texture shader.
 	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetVertexCount(), m_Model->GetInstanceCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
@@ -308,3 +294,112 @@ bool Graphics::Render(float _rotation)
 
 	return true;
 }
+
+void Graphics::TestIntersection(float, float)
+{
+	float pointX, pointY;
+	XMMATRIX projectionMatrix, viewMatrix, inverseViewMatrix, worldMatrix, translateMatrix, inverseWorldMatrix;
+	XMFLOAT3 origin, rayOrigin;
+	XMVECTOR rayDir;
+	bool intersect, result;
+	
+	//Normalise mouse cursor coords (between -1, 1)
+	pointX = ((2.0f * (float)mouseX) / (float)m_screenWidth) - 1.0f;
+	pointY = (((2.0f * (float)mouseY) / (float)m_screenHeight) - 1.0f) * -1.0f;
+
+	// Adjust the points using the projection matrix to account for the aspect ratio of the viewport.
+	m_Direct3D->GetProjectionMatrix(projectionMatrix);
+	//these aren't right
+	pointX = pointX / projectionMatrix.operator/;
+	pointY = pointY / projectionMatrix.operator/;
+	// Get the inverse of the view matrix.
+	m_Camera->GetViewMatrix(viewMatrix);
+	XMMatrixInverse(&inverseViewMatrix, viewMatrix);
+
+	// Get the origin of the picking ray which is the position of the camera.
+	origin = m_Camera->GetPosition();
+
+	// Get the world matrix and translate to the location of the sphere.
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+	XMFLOAT3 num;
+	XMMatrixTranslation(translateMatrix, num);
+	XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Now get the inverse of the translated world matrix.
+	XMMatrixInverse(origin,  worldMatrix);
+
+	// Now transform the ray origin and the ray direction from view space to world space.
+	XMVector3TransformCoord(rayDir, inverseWorldMatrix);
+	//D3DXVec3TransformNormal(&rayDirection, &direction, &inverseWorldMatrix);
+	XMVector3TransformNormal(rayDir, inverseWorldMatrix);
+	// Normalize the ray direction.
+	XMVector3Normalize(rayDir);
+	// Now perform the ray-sphere intersection test.
+	intersect = RaySphereIntersect(rayOrigin, rayDirection, 1.0f);
+
+	if (intersect == true)
+	{
+		// anttweaakbaar set yes
+	}
+	else
+	{
+		//"No".
+		
+	}
+
+	return;
+}
+
+bool Graphics::RaySphereIntersect(XMFLOAT3 rayOrigin, XMFLOAT3 rayDirection, float radius)
+{
+	float a, b, c, discriminant;
+
+
+	// Calculate the a, b, and c coefficients.
+	a = (rayDirection.x * rayDirection.x) + (rayDirection.y * rayDirection.y) + (rayDirection.z * rayDirection.z);
+	b = ((rayDirection.x * rayOrigin.x) + (rayDirection.y * rayOrigin.y) + (rayDirection.z * rayOrigin.z)) * 2.0f;
+	c = ((rayOrigin.x * rayOrigin.x) + (rayOrigin.y * rayOrigin.y) + (rayOrigin.z * rayOrigin.z)) - (radius * radius);
+
+	// Find the discriminant.
+	discriminant = (b * b) - (4 * a * c);
+
+	// if discriminant is negative the picking ray missed the sphere, otherwise it intersected the sphere.
+	if (discriminant < 0.0f)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Graphics::HandleInput()
+{
+	bool result = false;
+
+	result = m_Input->Frame();
+	if (!result)
+	{
+		return false;
+	}
+
+	// Check if the left mouse button has been pressed.
+	if (m_Input->IsLeftMouseButtonDown() == true)
+	{
+		// If they have clicked on the screen with the mouse then perform an intersection test.
+		if (begin_check == false)
+		{
+			begin_check = true;
+			m_Input->GetMouseLocation(mouseX, mouseY);
+			TestIntersection(mouseX, mouseY);
+		}
+	}
+
+	// Check if the left mouse button has been released.
+	if (m_Input->IsLeftMouseButtonDown() == false)
+	{
+		begin_check = false;
+	}
+	return  true;
+}
+
+ 

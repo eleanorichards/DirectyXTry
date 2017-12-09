@@ -1,0 +1,20 @@
+#.Obj export file: 
+#Vertex count: 3
+
+#Vertices: 
+v 0.5 1 -1
+v 1 -1 -1
+v -1 -1 -1
+
+#Vertex Uvs: 
+vt 0 0
+vt 1 0
+vt 0 1
+
+#Vertex Normals: 
+vn 0 0 -1
+vn 0 0 -1
+vn 0 0 -1
+
+#Faces: 
+f 3//1 2//1 1//1

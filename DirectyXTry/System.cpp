@@ -110,8 +110,7 @@ void SystemClass::Shutdown()
 			{
 				done = true;
 			}
-			//else
-			//{
+			
 				// Otherwise do the frame processing.  If frame processing fails then exit.
 			result = Frame();
 			if (!result)
@@ -119,8 +118,7 @@ void SystemClass::Shutdown()
 				MessageBox(m_hwnd, L"Frame Processing Failed", L"Error", MB_OK);
 				done = true;
 			}
-			//}
-
+			
 				// Check if the user pressed escape and wants to quit.
 			if (m_Input->IsEscapePressed() == true)
 			{
@@ -175,9 +173,9 @@ bool SystemClass::Frame()
 	}
 	// Get the location of the mouse from the input object,
 	m_Input->GetMouseLocation(mouseX, mouseY);
-
+	takeInput();
 	// Do the frame processing for the graphics object.
-	result = m_Graphics->Frame();
+	result = m_Graphics->Frame(mouseX, mouseY);
 	if (!result)
 	{
 		return false;
@@ -218,7 +216,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
 	wc.hIconSm = wc.hIcon;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	wc.hbrBackground = (HBRUSH)GetStockObject(BACKGROUND_BLUE);
 	wc.lpszMenuName = NULL;
 	wc.lpszClassName = m_applicationName;
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -301,27 +299,27 @@ void SystemClass::ShutdownWindows()
 
 void SystemClass::takeInput()
 {
-	//if(m_Input->isKeyDown(VK_LEFT))
-	//{
-	//	//SETsTATE.LEFT
-	//	m_Graphics->MoveCamera(-0.1f,0,0);
-	//	return ;
-	//}
-	//if (m_Input->isKeyDown(VK_RIGHT))
-	//{
-	//	m_Graphics->MoveCamera(0.1f, 0, 0);
-	//	return;
-	//}
-	//if (m_Input->isKeyDown(VK_UP))
-	//{
-	//	m_Graphics->MoveCamera(0, 0.1f, 0);
-	//	return;
-	//}
-	//if (m_Input->isKeyDown(VK_DOWN))
-	//{
-	//	m_Graphics->MoveCamera(0, -0.1f, 0);
-	//	return;
-	//}
+	if(m_Input->isKeyDown(VK_LEFT))
+	{
+		//SETsTATE.LEFT
+		m_Graphics->MoveCamera(-0.1f,0,0);
+		return ;
+	}
+	if (m_Input->isKeyDown(VK_RIGHT))
+	{
+		m_Graphics->MoveCamera(0.1f, 0, 0);
+		return;
+	}
+	if (m_Input->isKeyDown(VK_UP))
+	{
+		m_Graphics->MoveCamera(0, 0.1f, 0);
+		return;
+	}
+	if (m_Input->isKeyDown(VK_DOWN))
+	{
+		m_Graphics->MoveCamera(0, -0.1f, 0);
+		return;
+	}
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)

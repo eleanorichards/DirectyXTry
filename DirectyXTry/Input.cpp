@@ -94,22 +94,23 @@ bool Input::Initialise(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scre
 }
 
 
-//void Input::KeyDown(unsigned int input)
-//{
-//	m_keys[input] = true;
-//	return;
-//}
-//
-//void Input::KeyUp(unsigned int input)
-//{
-//	m_keys[input] = false;
-//	return;
-//}
-//
-//bool Input::isKeyDown(unsigned int key)
-//{
-//	return m_keys[key];
-//}
+void Input::KeyDown(unsigned int input)
+{
+	if (m_keyboardState[input])
+		m_keyboardState[input] = true;
+	return;
+}
+
+void Input::KeyUp(unsigned int input)
+{
+	m_keyboardState[input] = false;
+	return;
+}
+
+bool Input::isKeyDown(unsigned int key)
+{
+	return m_keyboardState[key];
+}
 
 void Input::Shutdown()
 {
@@ -175,7 +176,7 @@ bool Input::IsEscapePressed()
 	return false;
 }
 
-void Input::GetMouseLocation(int &mouseX, int &mouseY)
+void Input::GetMouseLocation(float &mouseX, float &mouseY)
 {
 	mouseX = m_mouseX;
 	mouseY = m_mouseY;

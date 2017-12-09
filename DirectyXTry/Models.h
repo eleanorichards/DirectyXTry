@@ -41,7 +41,7 @@ public:
 	bool Initialise(ID3D11Device*, ID3D11DeviceContext*, char *, char*);
 	void Shutdown();
 	void Render(ID3D11DeviceContext*);
-
+	bool ExportModel();
 	int GetVertexCount();
 	int GetInstanceCount();
 
