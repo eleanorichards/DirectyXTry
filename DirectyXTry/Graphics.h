@@ -41,10 +41,13 @@ private:
 	float rotation = 0.0f;
 	float mouseX;
 	float mouseY;
+	float screen_width;
+	float screen_height;
 	bool  export_model = false;
 	bool begin_check = false;
 	bool over_object = false;
 private:
+	HINSTANCE m_hinstance;
 	D3DClass* m_Direct3D;
 	Camera* m_Camera;
 	Models* m_Model;

@@ -164,7 +164,7 @@ LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM 
 bool SystemClass::Frame()
 {
 	bool result;
-	int mouseX, mouseY;
+	float mouseX, mouseY;
 	// Do the input frame processing.
 	result = m_Input->Frame();
 	if (!result)

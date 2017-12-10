@@ -1,2 +1,7 @@
 ﻿  Graphics.cpp
+c:\users\elean\source\repos\directyxtry\directyxtry\graphics.cpp(40): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\elean\source\repos\directyxtry\directyxtry\graphics.cpp(41): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\elean\source\repos\directyxtry\directyxtry\graphics.cpp(321): warning C4101: 'result': unreferenced local variable
+c:\users\elean\source\repos\directyxtry\directyxtry\graphics.cpp(318): warning C4101: 'directionFloat': unreferenced local variable
+c:\users\elean\source\repos\directyxtry\directyxtry\graphics.cpp(407): warning C4101: 'result': unreferenced local variable
   DirectyXTry.vcxproj -> C:\Users\Elean\source\repos\DirectyXTry\x64\Debug\DirectyXTry.exe

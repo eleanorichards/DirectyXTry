@@ -37,6 +37,18 @@ void TW_CALL RunCBExport(void *_Model)
 bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 {
 	bool result;
+	screen_height = screenHeight;
+	screen_width = screenWidth;
+
+	// Initialize the input object.
+	//m_Input = new Input;
+	//result = m_Input->Initialise(m_hinstance, hwnd, screenWidth, screenHeight);
+	//if (!result)
+	//{
+	//	MessageBox(hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
+	//	return false;
+	//}
+
 
 	// Create the Direct3D object.
 	m_Direct3D = new D3DClass;
@@ -44,7 +56,6 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	{
 		return false;
 	}
-
 	// Initialize the Direct3D object.
 	result = m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
 	if (!result)
@@ -59,7 +70,6 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	{
 		return false;
 	}
-
 	// Set the initial position of the camera.
 	m_Camera->SetPosition(0.0f, 0.0f, -5.0f);
 
@@ -69,7 +79,6 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	{
 		return false;
 	}
-
 	// Initialize the model object.
 	result = m_Model->Initialise(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),"../DirectyXTry/Assets/tri.txt", "../DirectyXTry/Assets/Stone03.tga");
 	if (!result)
@@ -85,7 +94,6 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	{
 		return false;
 	}
-
 	// Initialize the texture shader object.
 	result = m_TextureShader->Initialise(m_Direct3D->GetDevice(), hwnd);
 	if (!result)
@@ -105,7 +113,7 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	TwAddVarRO(bTweakBar, "MouseX", TW_TYPE_FLOAT, &mouseX, "step=0.1");
 	TwAddVarRO(bTweakBar, "MouseY", TW_TYPE_FLOAT, &mouseY, "step=0.1");
 	TwAddButton(bTweakBar, "Export Model", RunCBExport, m_Model, "label='export'");
-	TwAddVarRO(bTweakBar, "Mouse Over Object", TW_TYPE_BOOLCPP, &over_object, "");
+	TwAddVarRO(bTweakBar, "Mouse Over", TW_TYPE_BOOLCPP, &over_object, "");
 	//LIGHT STUFF
 
 	// Create the light shader object.
@@ -202,11 +210,18 @@ bool Graphics::Frame(float _mouseX, float _mouseY)
 	mouseX = _mouseX;
 	mouseY = _mouseY;
 	bool result;
+
 	// Update the rotation variable each frame
 	rotation += rotation_speed * ((float)XM_PI / 180.0f);
 	if (rotation > 360.0f)
 	{
 		rotation -= 360.0f;
+	}
+
+	result = HandleInput();
+	if (!result)
+	{
+		return false;
 	}
 
 	// Render the graphics scene.
@@ -248,7 +263,7 @@ void Graphics::MoveCamera(float x, float y, float z)
 
 bool Graphics::Render(float _rotation)
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix, inverseWorldMatrix;
 
 	bool result;
 	
@@ -264,12 +279,11 @@ bool Graphics::Render(float _rotation)
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 
-	// Translate to the location of the model.	
-	
-	XMMatrixTranslation(translateMatrix, -5.0f, 1.0f, 5.0f);
-	XMMatrixMultiply(worldMatrix, translateMatrix);
-	//D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &translateMatrix);
-	
+	// Translate to the location of the model.	//FLOATS SHOULD BE EQUAL TO MODEL OFFSET
+	translateMatrix = XMMatrixTranslation(-5.0f, 1.0f, 5.0f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	inverseWorldMatrix = XMMatrixInverse(NULL, worldMatrix);
+
 	//reset world matrix after all that multiplying
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 
@@ -295,56 +309,72 @@ bool Graphics::Render(float _rotation)
 	return true;
 }
 
-void Graphics::TestIntersection(float, float)
+void Graphics::TestIntersection(float mouseX, float mouseY)
 {
 	float pointX, pointY;
-	XMMATRIX projectionMatrix, viewMatrix, inverseViewMatrix, worldMatrix, translateMatrix, inverseWorldMatrix;
-	XMFLOAT3 origin, rayOrigin;
-	XMVECTOR rayDir;
+	XMMATRIX projectionMatrix, viewMatrix, inverseViewMatrix, worldMatrix, translateMatrix, inverseWorldMatrix;	
+	XMFLOAT3X3 inverseViewMatrixFloat, projectionMatrixFloat;
+	XMFLOAT3 origin, direction;
+	XMFLOAT3 rayOriginFloat, rayDirFloat, directionFloat;
+	XMVECTOR rayDir,  rayOrigin;
+	XMVECTOR  originVector, directionVector;
 	bool intersect, result;
 	
 	//Normalise mouse cursor coords (between -1, 1)
-	pointX = ((2.0f * (float)mouseX) / (float)m_screenWidth) - 1.0f;
-	pointY = (((2.0f * (float)mouseY) / (float)m_screenHeight) - 1.0f) * -1.0f;
+	pointX = ((2.0f * mouseX) / screen_width) - 1.0f;
+	pointY = (((2.0f * mouseY) / screen_height) - 1.0f) * -1.0f;
 
 	// Adjust the points using the projection matrix to account for the aspect ratio of the viewport.
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	//these aren't right
-	pointX = pointX / projectionMatrix.operator/;
-	pointY = pointY / projectionMatrix.operator/;
+	
+	XMStoreFloat3x3(&projectionMatrixFloat, projectionMatrix);
+	
+	//HERE
+	//pointX /= projectionMatrixFloat._11 + inverseViewMatrixFloat._21 + inverseViewMatrixFloat._31;
+	//pointY /= projectionMatrixFloat.operator();
+
 	// Get the inverse of the view matrix.
 	m_Camera->GetViewMatrix(viewMatrix);
-	XMMatrixInverse(&inverseViewMatrix, viewMatrix);
+	inverseViewMatrix = XMMatrixInverse(NULL, viewMatrix);
+	//convert to float4x4 for maths
+	XMStoreFloat3x3(&inverseViewMatrixFloat, inverseViewMatrix);
+	// Calculate the direction of the picking ray in view space.
+	direction.x = (pointX * inverseViewMatrixFloat._11) + (pointY * inverseViewMatrixFloat._21) + inverseViewMatrixFloat._31;
+	direction.y = (pointX * inverseViewMatrixFloat._12) + (pointY * inverseViewMatrixFloat._22) + inverseViewMatrixFloat._32;
+	direction.z = (pointX * inverseViewMatrixFloat._13) + (pointY * inverseViewMatrixFloat._23) + inverseViewMatrixFloat._33;
 
 	// Get the origin of the picking ray which is the position of the camera.
 	origin = m_Camera->GetPosition();
 
 	// Get the world matrix and translate to the location of the sphere.
 	m_Direct3D->GetWorldMatrix(worldMatrix);
-	XMFLOAT3 num;
-	XMMatrixTranslation(translateMatrix, num);
+	translateMatrix = XMMatrixTranslation(0.0f,0.0f,0.0f);
 	XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Now get the inverse of the translated world matrix.
-	XMMatrixInverse(origin,  worldMatrix);
-
+	inverseWorldMatrix = XMMatrixInverse(NULL,  worldMatrix);
+	//convert any float3s to vectors that we need
+	originVector = XMLoadFloat3(&origin);
+	directionVector = XMLoadFloat3(&direction);
 	// Now transform the ray origin and the ray direction from view space to world space.
-	XMVector3TransformCoord(rayDir, inverseWorldMatrix);
-	//D3DXVec3TransformNormal(&rayDirection, &direction, &inverseWorldMatrix);
-	XMVector3TransformNormal(rayDir, inverseWorldMatrix);
+	rayOrigin = XMVector3TransformCoord(originVector, inverseWorldMatrix);
+	rayDir = XMVector3TransformNormal(directionVector, inverseWorldMatrix);
 	// Normalize the ray direction.
 	XMVector3Normalize(rayDir);
+	//convert vectors to floats for maths...
+	XMStoreFloat3(&rayOriginFloat, rayOrigin);
+	XMStoreFloat3(&rayDirFloat, rayDir);
 	// Now perform the ray-sphere intersection test.
-	intersect = RaySphereIntersect(rayOrigin, rayDirection, 1.0f);
+	intersect = RaySphereIntersect(rayOriginFloat, rayDirFloat, 1.0f);
 
 	if (intersect == true)
 	{
-		// anttweaakbaar set yes
+		over_object = true;
 	}
 	else
 	{
-		//"No".
-		
+		over_object = false;		
 	}
 
 	return;
@@ -374,16 +404,16 @@ bool Graphics::RaySphereIntersect(XMFLOAT3 rayOrigin, XMFLOAT3 rayDirection, flo
 
 bool Graphics::HandleInput()
 {
-	bool result = false;
-
-	result = m_Input->Frame();
+	bool result;
+	float mouseX, mouseY;
+	/*result = m_Input->Frame();
 	if (!result)
 	{
 		return false;
-	}
+	}*/
 
 	// Check if the left mouse button has been pressed.
-	if (m_Input->IsLeftMouseButtonDown() == true)
+	if (m_Input->IsLeftMouseButtonDown())
 	{
 		// If they have clicked on the screen with the mouse then perform an intersection test.
 		if (begin_check == false)
@@ -395,7 +425,7 @@ bool Graphics::HandleInput()
 	}
 
 	// Check if the left mouse button has been released.
-	if (m_Input->IsLeftMouseButtonDown() == false)
+	if (!m_Input->IsLeftMouseButtonDown())
 	{
 		begin_check = false;
 	}

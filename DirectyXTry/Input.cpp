@@ -112,6 +112,15 @@ bool Input::isKeyDown(unsigned int key)
 	return m_keyboardState[key];
 }
 
+bool Input::IsLeftMouseButtonDown()
+{
+	if (m_mouseState.rgbButtons[0] & 0x80)
+	{
+		return true;
+	}
+	return false;
+}
+
 void Input::Shutdown()
 {
 

@@ -19,9 +19,9 @@ public:
 
 	void KeyDown(unsigned int);
 	void KeyUp(unsigned int);
-
 	bool isKeyDown(unsigned int);
 
+	bool IsLeftMouseButtonDown();
 	void Shutdown();
 	bool Frame();
 
