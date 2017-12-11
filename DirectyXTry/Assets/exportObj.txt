@@ -1,20 +1,119 @@
 #.Obj export file: 
-#Vertex count: 3
+#Vertex count: 36
 
 #Vertices: 
-v 0.5 1 -1
-v 1 -1 -1
+v -1 1 -1
+v 1 1 -1
 v -1 -1 -1
+v -1 -1 -1
+v 1 1 -1
+v 1 -1 -1
+v 1 1 -1
+v 1 1 1
+v 1 -1 -1
+v 1 -1 -1
+v 1 1 1
+v 1 -1 1
+v 1 1 1
+v -1 1 1
+v 1 -1 1
+v 1 -1 1
+v -1 1 1
+v -1 -1 1
+v -1 1 1
+v -1 1 -1
+v -1 -1 1
+v -1 -1 1
+v -1 1 -1
+v -1 -1 -1
+v -1 1 1
+v 1 1 1
+v -1 1 -1
+v -1 1 -1
+v 1 1 1
+v 1 1 -1
+v -1 -1 -1
+v 1 -1 -1
+v -1 -1 1
+v -1 -1 1
+v 1 -1 -1
+v 1 -1 1
 
 #Vertex Uvs: 
 vt 0 0
 vt 1 0
 vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
 
 #Vertex Normals: 
 vn 0 0 -1
 vn 0 0 -1
 vn 0 0 -1
+vn 0 0 -1
+vn 0 0 -1
+vn 0 0 -1
+vn 1 0 0
+vn 1 0 0
+vn 1 0 0
+vn 1 0 0
+vn 1 0 0
+vn 1 0 0
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn -1 0 0
+vn -1 0 0
+vn -1 0 0
+vn -1 0 0
+vn -1 0 0
+vn -1 0 0
+vn 0 1 0
+vn 0 1 0
+vn 0 1 0
+vn 0 1 0
+vn 0 1 0
+vn 0 1 0
+vn 0 -1 0
+vn 0 -1 0
+vn 0 -1 0
+vn 0 -1 0
+vn 0 -1 0
+vn 0 -1 0
 
 #Faces: 
 f 3//1 2//1 1//1

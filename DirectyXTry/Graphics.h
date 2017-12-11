@@ -23,18 +23,21 @@ public:
 	Graphics(const Graphics&);
 	~Graphics();
 
-	bool Initialise(int, int, HWND);
+	bool Initialise(int, int, HWND, HINSTANCE);
 	void Shutdown();
-	bool Frame(float, float);
+	bool Frame();
 	void MoveObject(string direction);
 	void RotateCamera(float x, float y, float z);
 	void MoveCamera(float x, float y, float z);
+	void ResetModel();
 	bool Render(float _rotation);
 private:
 
 	void TestIntersection(float, float);
 	bool RaySphereIntersect(XMFLOAT3, XMFLOAT3, float);
 	bool HandleInput();
+	void takeInput();
+	
 private:
 
 	float rotation_speed = 0.1f;
@@ -46,8 +49,10 @@ private:
 	bool  export_model = false;
 	bool begin_check = false;
 	bool over_object = false;
+	bool reset_model = false;
+	string modelFileName = "";
+	string textureFileName = "";
 private:
-	HINSTANCE m_hinstance;
 	D3DClass* m_Direct3D;
 	Camera* m_Camera;
 	Models* m_Model;

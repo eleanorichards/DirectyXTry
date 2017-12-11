@@ -42,6 +42,13 @@ bool Input::Initialise(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scre
 		return false;
 	}
 
+	// Set the cooperative level of the keyboard to not share with other programs.
+	result = m_keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE);
+	if (FAILED(result))
+	{
+		return false;
+	}
+	
 	// Set the data format.  In this case since it is a keyboard we can use the predefined data format.
 	result = m_keyboard->SetDataFormat(&c_dfDIKeyboard);
 	if (FAILED(result))
@@ -49,19 +56,25 @@ bool Input::Initialise(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scre
 		return false;
 	}
 
-	// Set the cooperative level of the keyboard to not share with other programs.
-	result = m_keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE);
-	if (FAILED(result))
-	{
-		return false;
-	}
-
-	// Now acquire the keyboard.
+	// Now acquire the keyboard. //HERE
 	result = m_keyboard->Acquire();
 	if (FAILED(result))
 	{
-		return false;
+		if (result == S_FALSE)
+		{
+			//device already acquired
+			//don't do anythign else
+		}
+		else
+		{
+			//ignore e_ACCESSDENIED (apprently?)
+			if (result != E_ACCESSDENIED)
+			{
+				return result;
+			}
+		}		
 	}
+
 	// Initialize the direct input interface for the mouse.
 	result = m_directInput->CreateDevice(GUID_SysMouse, &m_mouse, NULL);
 	if (FAILED(result))

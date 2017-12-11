@@ -2,6 +2,19 @@
 #include "Graphics.h"
 #include "AntTweakBar.h"
 
+
+typedef enum ModelTypes
+{
+	CUBE,
+	TRIANGLE,
+	TRUNK,
+	LEAF
+};
+
+ModelTypes type = CUBE;
+TwEnumVal modelsEV[] = { { CUBE, "Cube" },{ TRIANGLE, "Triangle" },{TRUNK, "Trunk"},{LEAF,"Leaf"} };
+TwType modelType;
+
 Graphics::Graphics()
 {
 	m_Direct3D = 0;
@@ -11,9 +24,6 @@ Graphics::Graphics()
 	m_LightShader = 0;
 	m_Light = 0;
 	m_Input = 0;
-	//COLOURSHADER
-	//m_ColourShader = 0;	
-
 }
 
 Graphics::Graphics(const Graphics &)
@@ -34,20 +44,34 @@ void TW_CALL RunCBExport(void *_Model)
 	delete m_Model;
 }
 
-bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
+void TW_CALL RunCBReset(void* _Graphics)
+{
+	Graphics* m_Graphics;
+	m_Graphics = (Graphics*)_Graphics;
+	m_Graphics->ResetModel();	
+	m_Graphics = 0;
+	delete m_Graphics;
+}
+
+bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd, HINSTANCE hinstance)
 {
 	bool result;
 	screen_height = screenHeight;
 	screen_width = screenWidth;
-
+	
+	// Create the input object.  This object will be used to handle reading the keyboard input from the user.
+	m_Input = new Input;
+	if (!m_Input)
+	{
+		return false;
+	}
 	// Initialize the input object.
-	//m_Input = new Input;
-	//result = m_Input->Initialise(m_hinstance, hwnd, screenWidth, screenHeight);
-	//if (!result)
-	//{
-	//	MessageBox(hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
-	//	return false;
-	//}
+	result = m_Input->Initialise(hinstance, hwnd, screenWidth, screenHeight);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
+		return false;
+	}
 
 
 	// Create the Direct3D object.
@@ -102,6 +126,7 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	}
 
+
 	//AntTweakBar Initialisation
 	TwInit(TW_DIRECT3D11, m_Direct3D->GetDevice());
 	TwWindowSize(screenWidth, screenWidth);
@@ -109,10 +134,16 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd)
 	//create antTweakbars
 	TwBar* bTweakBar;
 	bTweakBar = TwNewBar("Model Info");
+	modelType = TwDefineEnum("ModelType", modelsEV, 4);
 	TwAddVarRW(bTweakBar, "Rotation Speed", TW_TYPE_FLOAT, &rotation_speed, "min=0 max=10 step=0.1");
+	TwAddVarRW(bTweakBar, "Load Model", modelType, &type, NULL);
+	TwAddVarRW(bTweakBar, "Texture Filename", TW_TYPE_STDSTRING, &textureFileName, "min=0 max=10 step=0.1");
+
 	TwAddVarRO(bTweakBar, "MouseX", TW_TYPE_FLOAT, &mouseX, "step=0.1");
 	TwAddVarRO(bTweakBar, "MouseY", TW_TYPE_FLOAT, &mouseY, "step=0.1");
 	TwAddButton(bTweakBar, "Export Model", RunCBExport, m_Model, "label='export'");
+	TwAddButton(bTweakBar, "Reset Model", RunCBReset, this, "label='reset'");
+
 	TwAddVarRO(bTweakBar, "Mouse Over", TW_TYPE_BOOLCPP, &over_object, "");
 	//LIGHT STUFF
 
@@ -205,25 +236,31 @@ void Graphics::Shutdown()
 	}
 }
 
-bool Graphics::Frame(float _mouseX, float _mouseY)
+bool Graphics::Frame()
 {
-	mouseX = _mouseX;
-	mouseY = _mouseY;
+	m_Input->GetMouseLocation(mouseX, mouseY);
 	bool result;
+
+	// Do the input frame processing.
+	result = m_Input->Frame();
+	if (!result)
+	{
+		return false;
+	}
+
+	HandleInput();
 
 	// Update the rotation variable each frame
 	rotation += rotation_speed * ((float)XM_PI / 180.0f);
 	if (rotation > 360.0f)
 	{
 		rotation -= 360.0f;
-	}
+	}	
 
-	result = HandleInput();
-	if (!result)
+	if (reset_model)
 	{
-		return false;
+		m_Model->Initialise(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), "../DirectyXTry/Assets/tri.txt", "../DirectyXTry/Assets/Stone03.tga");
 	}
-
 	// Render the graphics scene.
 	result = Render(rotation);
 
@@ -331,8 +368,8 @@ void Graphics::TestIntersection(float mouseX, float mouseY)
 	XMStoreFloat3x3(&projectionMatrixFloat, projectionMatrix);
 	
 	//HERE
-	//pointX /= projectionMatrixFloat._11 + inverseViewMatrixFloat._21 + inverseViewMatrixFloat._31;
-	//pointY /= projectionMatrixFloat.operator();
+	pointX /= projectionMatrixFloat._11;
+	pointY /= projectionMatrixFloat._12;
 
 	// Get the inverse of the view matrix.
 	m_Camera->GetViewMatrix(viewMatrix);
@@ -406,11 +443,11 @@ bool Graphics::HandleInput()
 {
 	bool result;
 	float mouseX, mouseY;
-	/*result = m_Input->Frame();
+	result = m_Input;
 	if (!result)
 	{
 		return false;
-	}*/
+	}
 
 	// Check if the left mouse button has been pressed.
 	if (m_Input->IsLeftMouseButtonDown())
@@ -430,6 +467,36 @@ bool Graphics::HandleInput()
 		begin_check = false;
 	}
 	return  true;
+}
+
+void Graphics::takeInput()
+{
+	//if (m_Input->isKeyDown(VK_LEFT))
+	//{
+	//	//SETsTATE.LEFT
+	//	MoveCamera(-0.1f, 0, 0);
+	//	return;
+	//}
+	//if (m_Input->isKeyDown(VK_RIGHT))
+	//{
+	//	MoveCamera(0.1f, 0, 0);
+	//	return;
+	//}
+	//if (m_Input->isKeyDown(VK_UP))
+	//{
+	//	MoveCamera(0, 0.1f, 0);
+	//	return;
+	//}
+	//if (m_Input->isKeyDown(VK_DOWN))
+	//{
+	//	MoveCamera(0, -0.1f, 0);
+	//	return;
+	//}
+}
+
+void Graphics::ResetModel()
+{	
+	m_Model->ResetModel(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),  "../DirectyXTry/Assets/Cube.txt" , "../DirectyXTry/Assets/Stone03.tga");
 }
 
  

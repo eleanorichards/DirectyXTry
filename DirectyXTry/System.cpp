@@ -30,20 +30,7 @@ bool SystemClass::Initialize()
 	// Initialize the windows api.
 	InitializeWindows(screenWidth, screenHeight);
 
-	// Create the input object.  This object will be used to handle reading the keyboard input from the user.
-	m_Input = new Input;
-	if (!m_Input)
-	{
-		return false;
-	}
-	// Initialize the input object.
-	result = m_Input->Initialise(m_hinstance, m_hwnd, screenWidth, screenHeight);
-	if (!result)
-	{
-		MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
-		return false;
-	}
-
+		
 	// Create the graphics object.  This object will handle rendering all the graphics for this application.
 	m_Graphics = new Graphics;
 	if (!m_Graphics)
@@ -52,7 +39,7 @@ bool SystemClass::Initialize()
 	}
 
 	// Initialize the graphics object.
-	result = m_Graphics->Initialise(screenWidth, screenHeight, m_hwnd);
+	result = m_Graphics->Initialise(screenWidth, screenHeight, m_hwnd, m_hinstance);
 	if (!result)
 	{
 		return false;
@@ -120,10 +107,10 @@ void SystemClass::Shutdown()
 			}
 			
 				// Check if the user pressed escape and wants to quit.
-			if (m_Input->IsEscapePressed() == true)
+			/*if (m_Input->IsEscapePressed() == true)
 			{
 				done = true;
-			}
+			}*/
 		}
 
 		return;
@@ -164,29 +151,14 @@ LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM 
 bool SystemClass::Frame()
 {
 	bool result;
-	float mouseX, mouseY;
-	// Do the input frame processing.
-	result = m_Input->Frame();
-	if (!result)
-	{
-		return false;
-	}
-	// Get the location of the mouse from the input object,
-	m_Input->GetMouseLocation(mouseX, mouseY);
-	takeInput();
+	
+	
 	// Do the frame processing for the graphics object.
-	result = m_Graphics->Frame(mouseX, mouseY);
+	result = m_Graphics->Frame();
 	if (!result)
 	{
 		return false;
 	}
-
-	// Finally render the graphics to the screen.
-	/*result = m_Graphics->Render(0.0f);
-	if (!result)
-	{
-		return false;
-	}*/
 
 	return true;
 }
@@ -297,30 +269,7 @@ void SystemClass::ShutdownWindows()
 	return;
 }
 
-void SystemClass::takeInput()
-{
-	if(m_Input->isKeyDown(VK_LEFT))
-	{
-		//SETsTATE.LEFT
-		m_Graphics->MoveCamera(-0.1f,0,0);
-		return ;
-	}
-	if (m_Input->isKeyDown(VK_RIGHT))
-	{
-		m_Graphics->MoveCamera(0.1f, 0, 0);
-		return;
-	}
-	if (m_Input->isKeyDown(VK_UP))
-	{
-		m_Graphics->MoveCamera(0, 0.1f, 0);
-		return;
-	}
-	if (m_Input->isKeyDown(VK_DOWN))
-	{
-		m_Graphics->MoveCamera(0, -0.1f, 0);
-		return;
-	}
-}
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {

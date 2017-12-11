@@ -439,3 +439,9 @@ void Models::ReleaseModel()
 
 	return;
 }
+
+void Models::ResetModel(ID3D11Device* device, ID3D11DeviceContext *deviceContext, char* modelFilename, char* textureFilename)
+{
+	Shutdown();
+	Initialise(device, deviceContext, modelFilename, textureFilename);
+}
