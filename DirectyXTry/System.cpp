@@ -71,50 +71,49 @@ void SystemClass::Shutdown()
 	return;
 }
 
-	//THE MAIN LOOP
-	void SystemClass::Run()
+//THE MAIN LOOP
+void SystemClass::Run()
+{
+	MSG msg;
+	bool done = false;
+	bool result = false;
+
+
+	// Initialize the message structure.
+	ZeroMemory(&msg, sizeof(MSG));
+
+	// Loop until there is a quit message from the window or the user.
+	while (!done)
 	{
-		MSG msg;
-		bool done = false;
-		bool result = false;
-
-
-		// Initialize the message structure.
-		ZeroMemory(&msg, sizeof(MSG));
-
-		// Loop until there is a quit message from the window or the user.
-		while (!done)
+		// Handle the windows messages.
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			// Handle the windows messages.
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-
-			// If windows signals to end the application then exit out.
-			if (msg.message == WM_QUIT)
-			{
-				done = true;
-			}
-			
-				// Otherwise do the frame processing.  If frame processing fails then exit.
-			result = Frame();
-			if (!result)
-			{
-				MessageBox(m_hwnd, L"Frame Processing Failed", L"Error", MB_OK);
-				done = true;
-			}
-			
-				// Check if the user pressed escape and wants to quit.
-			/*if (m_Input->IsEscapePressed() == true)
-			{
-				done = true;
-			}*/
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
 
-		return;
+		// If windows signals to end the application then exit out.
+		if (msg.message == WM_QUIT)
+		{
+			done = true;
+		}
+			
+			// Otherwise do the frame processing.  If frame processing fails then exit.
+		result = Frame();
+		if (!result)
+		{
+			MessageBox(m_hwnd, L"Frame Processing Failed", L"Error", MB_OK);
+			done = true;
+		}
+			
+			// Check if the user pressed escape and wants to quit.
+			// Do the input frame processing.
+		
+
 	}
+
+	return;
+}
 
 
 LRESULT SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)

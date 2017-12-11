@@ -11,7 +11,7 @@ typedef enum ModelTypes
 	LEAF
 };
 
-ModelTypes type = CUBE;
+ModelTypes modelName = CUBE;
 TwEnumVal modelsEV[] = { { CUBE, "Cube" },{ TRIANGLE, "Triangle" },{TRUNK, "Trunk"},{LEAF,"Leaf"} };
 TwType modelType;
 
@@ -134,9 +134,11 @@ bool Graphics::Initialise(int screenWidth, int screenHeight, HWND hwnd, HINSTANC
 	//create antTweakbars
 	TwBar* bTweakBar;
 	bTweakBar = TwNewBar("Model Info");
-	modelType = TwDefineEnum("ModelType", modelsEV, 4);
 	TwAddVarRW(bTweakBar, "Rotation Speed", TW_TYPE_FLOAT, &rotation_speed, "min=0 max=10 step=0.1");
-	TwAddVarRW(bTweakBar, "Load Model", modelType, &type, NULL);
+	//Model Drop Down
+	modelType = TwDefineEnum("ModelType", modelsEV, 4);
+	TwAddVarRW(bTweakBar, "Load Model", modelType, &modelName, NULL);
+
 	TwAddVarRW(bTweakBar, "Texture Filename", TW_TYPE_STDSTRING, &textureFileName, "min=0 max=10 step=0.1");
 
 	TwAddVarRO(bTweakBar, "MouseX", TW_TYPE_FLOAT, &mouseX, "step=0.1");
@@ -241,14 +243,12 @@ bool Graphics::Frame()
 	m_Input->GetMouseLocation(mouseX, mouseY);
 	bool result;
 
-	// Do the input frame processing.
-	result = m_Input->Frame();
+	result = HandleInput();
 	if (!result)
 	{
 		return false;
 	}
-
-	HandleInput();
+	
 
 	// Update the rotation variable each frame
 	rotation += rotation_speed * ((float)XM_PI / 180.0f);
@@ -443,8 +443,14 @@ bool Graphics::HandleInput()
 {
 	bool result;
 	float mouseX, mouseY;
-	result = m_Input;
+	
+	result = m_Input->Frame();
 	if (!result)
+	{
+		return false;
+	}
+	// Check if the user pressed escape and wants to exit the application.
+	if (m_Input->IsEscapePressed() == true)
 	{
 		return false;
 	}
@@ -471,32 +477,59 @@ bool Graphics::HandleInput()
 
 void Graphics::takeInput()
 {
-	//if (m_Input->isKeyDown(VK_LEFT))
-	//{
-	//	//SETsTATE.LEFT
-	//	MoveCamera(-0.1f, 0, 0);
-	//	return;
-	//}
-	//if (m_Input->isKeyDown(VK_RIGHT))
-	//{
-	//	MoveCamera(0.1f, 0, 0);
-	//	return;
-	//}
-	//if (m_Input->isKeyDown(VK_UP))
-	//{
-	//	MoveCamera(0, 0.1f, 0);
-	//	return;
-	//}
-	//if (m_Input->isKeyDown(VK_DOWN))
-	//{
-	//	MoveCamera(0, -0.1f, 0);
-	//	return;
-	//}
+	if (m_Input->isKeyDown(VK_LEFT))
+	{
+		//SETsTATE.LEFT
+		MoveCamera(-0.1f, 0, 0);
+		return;
+	}
+	if (m_Input->isKeyDown(VK_RIGHT))
+	{
+		MoveCamera(0.1f, 0, 0);
+		return;
+	}
+	if (m_Input->isKeyDown(VK_UP))
+	{
+		MoveCamera(0, 0.1f, 0);
+		return;
+	}
+	if (m_Input->isKeyDown(VK_DOWN))
+	{
+		MoveCamera(0, -0.1f, 0);
+		return;
+	}
+	if (m_Input->IsEscapePressed())
+	{
+		MoveCamera(1, -0.1f, 0);
+	}
+	
 }
 
 void Graphics::ResetModel()
 {	
-	m_Model->ResetModel(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(),  "../DirectyXTry/Assets/Cube.txt" , "../DirectyXTry/Assets/Stone03.tga");
+	const char* modelFileName = "";
+	const char* texName = "";
+	const char* folderPath = "../DirectyXTry/Assets/";
+
+	switch (modelName)
+	{
+	case CUBE:
+		modelFileName =  "../DirectyXTry/Assets/Cube.txt";
+		break;
+	case TRIANGLE:
+		modelFileName = "../DirectyXTry/Assets/tri.txt";
+		break;
+	case TRUNK:
+		modelFileName = "../DirectyXTry/Assets/trunk.txt";
+		break;
+	case LEAF:
+		modelFileName = "../DirectyXTry/Assets/leaf.txt";
+		break;
+	default:
+		break;
+	}
+	
+	m_Model->ResetModel(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), (char*)modelFileName, "../DirectyXTry/Assets/Stone03.tga");
 }
 
  
